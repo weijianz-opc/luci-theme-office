@@ -11,7 +11,7 @@ include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=Office theme (isometric glass UI)
 LUCI_DEPENDS:=
-PKG_VERSION:=1.0.0
+PKG_VERSION:=1.0.1
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 

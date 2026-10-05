@@ -31,12 +31,13 @@
 		<button type="submit" class="btn o-login-btn">{{ _('Log in') }}</button>
 	</form>
 
+	{# packet path through the router; the login step is the firewall gate #}
 	<ul class="o-card o-steps o-login-steps" aria-hidden="true">
-		<li><span class="n" style="--c:#7aa2ff">1</span>Research</li>
-		<li><span class="n" style="--c:#a78bfa">2</span>Design</li>
-		<li><span class="n" style="--c:#5df2a0">3</span>Engineering</li>
-		<li class="hot"><span class="n">4</span>Operations</li>
-		<li><span class="n" style="--c:#8a8fa8">5</span>Management</li>
+		<li><span class="n" style="--c:#7aa2ff">1</span>WAN</li>
+		<li class="hot"><span class="n">2</span>{{ _('Firewall') }}</li>
+		<li><span class="n" style="--c:#a78bfa">3</span>{{ _('Routing') }}</li>
+		<li><span class="n" style="--c:#5df2a0">4</span>LAN</li>
+		<li><span class="n" style="--c:#5ee6ff">5</span>{{ _('Wireless') }}</li>
 	</ul>
 </main>
 
