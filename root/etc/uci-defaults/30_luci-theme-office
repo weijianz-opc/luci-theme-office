@@ -1,0 +1,10 @@
+#!/bin/sh
+# Register the Office theme and make it the default LuCI theme.
+
+uci -q batch <<-EOF
+	set luci.themes.Office=/luci-static/office
+	set luci.main.mediaurlbase=/luci-static/office
+	commit luci
+EOF
+
+exit 0

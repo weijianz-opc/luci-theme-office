@@ -1,0 +1,63 @@
+name: Build packages
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: OpenWrt ${{ matrix.release }} (${{ matrix.fmt }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - release: '25.12.5'
+            fmt: apk
+          - release: '24.10.8'
+            fmt: ipk
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src
+
+      # the SDK feed expects one sub-directory per package
+      - name: Prepare feed
+        run: |
+          mkdir -p feed/luci-theme-office
+          cp -r src/Makefile src/htdocs src/root src/ucode feed/luci-theme-office/
+
+      - name: Build
+        uses: openwrt/gh-action-sdk@main
+        env:
+          ARCH: x86_64-${{ matrix.release }}
+          FEED_DIR: ${{ github.workspace }}/feed
+          PACKAGES: luci-theme-office
+          NO_REFRESH_CHECK: 1
+          NO_SHFMT_CHECK: 1
+          V: s
+
+      - name: Collect package
+        run: |
+          mkdir -p out
+          find bin/packages -name 'luci-theme-office*.${{ matrix.fmt }}' -exec cp {} out/ \;
+          ls -la out
+          test -n "$(ls out)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: luci-theme-office-${{ matrix.release }}-${{ matrix.fmt }}
+          path: out/*
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/*

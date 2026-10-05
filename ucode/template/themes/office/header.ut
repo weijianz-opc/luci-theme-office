@@ -1,0 +1,113 @@
+{#
+ luci-theme-office — isometric "AI Office" glass theme
+ Based on luci-theme-bootstrap. Licensed to the public under the Apache License 2.0.
+-#}
+
+{%
+	import { getuid, getspnam } from 'luci.core';
+
+	const boardinfo = ubus.call('system', 'board') ?? {};
+	const sysinfo = ubus.call('system', 'info') ?? {};
+	const hostname = striptags(boardinfo.hostname ?? '?');
+
+	const up = +(sysinfo.uptime ?? 0);
+	const uptime = up >= 86400 ? sprintf('%dd %dh', up / 86400, (up % 86400) / 3600)
+	             : sprintf('%dh %dm', up / 3600, (up % 3600) / 60);
+	const load = sysinfo.load ? sprintf('%.2f', sysinfo.load[0] / 65536.0) : '-';
+	const mem = sysinfo.memory;
+	const memused = mem?.total ? sprintf('%d%%', 100 - (mem.available ?? mem.free) * 100 / mem.total) : '-';
+	const lt = sysinfo.localtime ? localtime(sysinfo.localtime) : null;
+	const today = lt ? sprintf('%04d-%02d-%02d', lt.year, lt.mon, lt.mday) : '';
+
+	http.prepare_content('text/html; charset=UTF-8');
+-%}
+
+<!DOCTYPE html>
+<html lang="{{ dispatcher.lang }}" data-darkmode="true">
+	<head>
+		<meta charset="utf-8">
+		<title>{{ striptags(`${hostname}${dispatched?.title ? ` | ${_(dispatched.title)}` : ''}`) }}</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="theme-color" content="#241d36">
+		<meta name="darkreader-lock">
+		<link rel="preload" href="{{ media }}/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+		<link rel="stylesheet" href="{{ media }}/base.css?v=1.0.0">
+		<link rel="stylesheet" media="only screen and (max-width: 854px)" href="{{ media }}/mobile-base.css?v=1.0.0">
+		<link rel="stylesheet" href="{{ media }}/office.css?v=1.0.0">
+		<link rel="icon" href="{{ media }}/logo.svg" sizes="any">
+		{% if (node?.css): %}
+		<link rel="stylesheet" href="{{ resource }}/{{ node.css }}">
+		{% endif %}
+		{% if (css): %}
+		<style title="text/css">{{ css }}</style>
+		{% endif %}
+		<script src="{{ dispatcher.build_url('admin/translations', dispatcher.lang) }}"></script>
+		<script src="{{ resource }}/cbi.js?v=1.0.0"></script>
+	</head>
+
+	<body class="o-theme lang_{{ dispatcher.lang }} {{ entityencode(striptags(node?.title ?? ''), true) }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}">
+		{% if (!blank_page): %}
+		<aside id="sidebar">
+			<a class="o-brand" href="/">
+				<span class="o-the">THE</span>
+				<span class="o-host">{{ hostname }}</span>
+			</a>
+			<p class="o-desc">{{ boardinfo.model ?? 'OpenWrt' }} — every page is a desk, every packet has a job. The menu below decides where it goes.</p>
+			<nav class="o-card o-side" aria-label="{{ _('Menu') }}">
+				<div class="o-card-head">
+					<span class="o-k">If one router ran<br>the whole office</span>
+					<span class="o-live">live · {{ today }}</span>
+				</div>
+				<ul id="mainmenu"></ul>
+				<div class="o-card-foot">{{ boardinfo.release?.description ?? '' }} · kernel {{ boardinfo.kernel ?? '?' }}</div>
+			</nav>
+		</aside>
+		<div id="scrim"></div>
+
+		<div class="o-shell">
+			<header class="o-top">
+				<div class="o-top-main">
+					<div class="o-top-row">
+						<button id="menu-toggle" type="button" aria-label="{{ _('Menu') }}" aria-controls="sidebar" aria-expanded="false"><span></span><span></span><span></span></button>
+						<a class="o-brand-mini" href="/">{{ hostname }}</a>
+						<ul id="topmenu" class="o-pills" style="display:none"></ul>
+						<div id="indicators"></div>
+					</div>
+				</div>
+				<div class="o-card o-info">
+					<div class="o-info-k"><span>{{ _('System') }} · {{ _('Uptime') }} {{ uptime }}</span><span>{{ load }}</span></div>
+					<div class="o-info-t">{{ boardinfo.model ?? hostname }} leads</div>
+					<div class="o-info-d"><b>{{ _('Load') }}:</b> {{ load }} · <b>{{ _('Memory') }}:</b> {{ memused }} {{ _('used') }}. {{ boardinfo.system ?? '' }}</div>
+				</div>
+			</header>
+
+			<div id="maincontent" class="container">
+				{% if (getuid() == 0 && getspnam('root')?.pwdp === ''): %}
+					<div class="alert-message warning">
+						<h4>{{ _('No password set!') }}</h4>
+						<p>{{ _('There is no password set on this router. Please configure a root password to protect the web interface.') }}</p>
+						{% if (dispatcher.lookup("admin/system/admin")): %}
+						  <div class="right"><a class="btn" href="{{ dispatcher.build_url("admin/system/admin") }}">{{ _('Go to password configuration...') }}</a></div>
+						{% endif %}
+					</div>
+				{% endif %}
+
+				{% if (boardinfo.rootfs_type == "initramfs"): %}
+					<div class="alert-message warning">
+						<h4>{{ _('System running in recovery (initramfs) mode.') }}</h4>
+						<p>{{ _('No changes to settings will be stored and are lost after rebooting. This mode should only be used to install a firmware upgrade') }}</p>
+						{% if (dispatcher.lookup("admin/system/flash")): %}
+						  <div class="right"><a class="btn" href="{{ dispatcher.build_url("admin/system/flash") }}">{{ _('Go to firmware upgrade...') }}</a></div>
+						{% endif %}
+					</div>
+				{% endif %}
+
+				<noscript>
+					<div class="alert-message warning">
+						<h4>{{ _('JavaScript required!') }}</h4>
+						<p>{{ _('You must enable JavaScript in your browser or LuCI will not work properly.') }}</p>
+					</div>
+				</noscript>
+
+				<div id="tabmenu" style="display:none"></div>
+		{% endif %}

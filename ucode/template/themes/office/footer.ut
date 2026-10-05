@@ -1,0 +1,27 @@
+{#
+ luci-theme-office — footer
+ Licensed to the public under the Apache License 2.0.
+-#}
+
+		{% if (!blank_page): %}
+			</div>
+
+			<footer class="o-foot">
+				<ul id="stepbar" class="o-card o-steps" style="display:none"></ul>
+				<div class="o-foot-r">
+					<ul class="breadcrumb" id="modemenu" style="display:none"></ul>
+					<span class="o-powered">
+						<a href="https://github.com/openwrt/luci" target="_blank" rel="noreferrer">{{ version.luciname }} ({{ version.luciversion }})</a>
+						·
+						<a href="{{ entityencode(version.disturl ?? '#', true) }}" target="_blank" rel="noreferrer">{{ version.distname }} {{ version.distversion }}</a>
+						{% if (lua_active): %}
+							· {{ _('Lua compatibility mode active') }}
+						{% endif %}
+					</span>
+				</div>
+			</footer>
+		</div>
+		<script>L.require('menu-office')</script>
+		{% endif %}
+	</body>
+</html>
